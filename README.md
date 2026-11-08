@@ -98,32 +98,41 @@ Uzupełniaj sekcje w zadaniach podanych w nawiasach. Zastępuj teksty w nawiasac
 
 ## Informacje ogólne
 
-* Tytuł: [tytuł projektu]
-* Autor: [imię i nazwisko]
-* Modalność: [tekst, obraz, audio albo dane multimodalne]
-* Problem klasyfikacji: [co jest klasą, ile jest klas]
+* Tytuł: Porównanie prostych cech barwnych i modelu pretrained w rozpoznawaniu chorób liści fasoli
+* Autor: Dominik Kamiński
+* Modalność: obraz (RGB, 500x500 px)
+* Problem klasyfikacji: Nadzorowana klasyfikacja jednolabelowa do 3 klas (angular_leaf_spot, bean_rust, healthy)
 
 ## Problem i pytanie eksperymentalne (Zadanie 1)
 
-[Jaki problem rozwiązujesz i co dokładnie chcesz sprawdzić.]
+Celem projektu jest nadzorowana, jednolabelowa klasyfikacja zdjęć liści fasoli do 3 klas: `angular_leaf_spot`, `bean_rust` oraz `healthy`.
+
+- **Pytanie eksperymentalne:** Czy cechy z zamrożonego modelu `MobileNetV3 Small` (ImageNet-1K) z regresją logistyczną pozwalają uzyskać wyższy wynik `macro-F1` niż punkt odniesienia (baseline) oparty na histogramach barw HSV i regresji logistycznej?
+- **Pytanie badawcze (Poziom C):** Czy augmentacja zbioru treningowego pojedynczym odbiciem poziomym (horizontal flip) poprawia wynik `macro-F1` modelu `MobileNetV3 Small` na nienaruszonym zbiorze walidacyjnym?
 
 ## Dane i licencja (Zadanie 1)
 
-[Źródło i link, licencja, sposób pobrania, liczba przykładów, lista klas, sposób oznaczenia etykiet, znane ograniczenia.]
+**Źródło:** Zbiór *Beans* (`AI-Lab-Makerere/beans`) autorstwa Makerere University i NARL (Uganda).
+- **Licencja:** MIT.
+- **Pobieranie:** Skrypt `audit_and_freeze.py` przez bibliotekę `datasets`.
+- **Liczba próbek:** 1295 zdjęć RGB 500x500 px (432 `angular_leaf_spot`, 436 `bean_rust`, 427 `healthy`).
+- **Etykietowanie:** Diagnozy polowe agronomów z NaCRRI.
+- **Wyniki audytu:** 0 braków danych, 0 dokładnych duplikatów MD5, 0 par o odległości pHash <= 2 między podziałami (brak wycieku).
+- **Ograniczenia i prywatność:** Brak identyfikatorów roślin (`plant_id`). Dane publiczne, brak danych wrażliwych.
 
 ## Protokół (Zadanie 1)
 
-* Jednostka generalizacji: [na przykład recenzja, pacjent, mówca, nagranie źródłowe]
-* Podział: [metoda i uzasadnienie]
-* Metryka główna i pomocnicze: [z uzasadnieniem]
-* Seed: [wartość]
-* Final test: zamrożony w commicie z tagiem `task-1`, identyfikatory w `splits/`. Jeśli podział był później poprawiany, podaj commit poprawionej wersji i opisz zmianę w dzienniku zmian.
+* Jednostka generalizacji: - Jednostka generalizacji: Pojedyncze zdjęcie liścia w warunkach polowych (brak identyfikatorów krzaków plant_id w metadanych wymusza generalizację na poziomie obrazu).
+* Podział: Oficjalny podział benchmarkowy autorów zbioru (zgodny z TFDS i Hugging Face). Zapewnia pełną porównywalność z literaturą oraz zachowuje naturalny balans klas w każdym segmencie.
+* Metryka główna i pomocnicze: Główna: `macro-F1` (traktuje każdą klasę z jednakową wagą i penalizuje pomijanie trudniejszych stadiów chorób). Pomocnicze: `accuracy` oraz F1 per klasa (pozwalają ocenić ogólny odsetek poprawnych diagnoz i specyfikę błędów dla danej choroby).
+* Seed: 42
+* Final test: zamrożony w commicie z tagiem `task-1`, identyfikatory w `splits/final_test_ids.txt`. Całkowita izolacja zbioru testowego zapobiega wyciekowi danych (data leakage) i optymalizacji hiperparametrów pod zbiór końcowy.
 
 | Zbiór | Liczba przykładów | Liczba niezależnych jednostek |
 |---|---|---|
-| train | | |
-| validation | | |
-| final test | | |
+| train | 1034 | 1034 |
+| validation | 133 | 133 |
+| final test | 128 | 128 |
 
 ## Wyniki (Zadania 2 do 5)
 
@@ -148,18 +157,24 @@ Pełny zapis jest w `final_system.md`. [Krótkie uzasadnienie wyboru na podstawi
 
 ## Reprodukcja
 
-[Wersja Pythona, instalacja środowiska, pobranie danych, kolejność uruchamiania notebooków albo skryptów, sprzęt, przybliżony czas.]
+- **Środowisko:** Python 3.12, wirtualne środowisko `venv`.
+- **Paczki (Zadanie 1):** `datasets`, `pillow`, `imagehash`, `pandas`, `numpy`.
+- **Generowanie podziałów i audyt:** Uruchomienie skryptu `python audit_and_freeze.py`, który pobiera dane i generuje pliki w katalogu `splits/`.
+- **Sprzęt:** Desktop PC, CPU AMD Ryzen 7 5700X, 32 GB RAM, system Windows 11.
+- **Czas audytu:** ok. 2 minuty (pobranie zbioru, hashowanie MD5 i weryfikacja pHash).
 
 ## Ograniczenia
 
-[Ograniczenia danych, protokołu i wyników. Czego wynik nie dowodzi.]
+1. **Brak metadanych o roślinach (`plant_id`):** Ryzyko obecności liści z tego samego krzaka po obu stronach podziału. Wnioskowanie dotyczy generalizacji na poziomie obrazu, a nie w pełni niezależnych biologicznie upraw.
+2. **Rozmiar zbioru testowego:** 128 próbek oznacza zmianę wyniku o ok. 0.78 p.p. przy pojedynczym błędzie.
+3. **Specyfika upraw:** Zdjęcia zebrano w Ugandzie, co może ograniczać transferowalność modelu na inne odmiany fasoli i warunki klimatyczne.
 
 ## Dziennik zmian
 
 | Data | Zadanie | Co zmieniono i dlaczego |
 |---|---|---|
-| | | |
+| 2026-11-08 | Zadanie 1 | Inicjalizacja dokumentacji, audyt danych i zamrożenie podziałów w `splits/`. |
 
 ## Licencja projektu
 
-[Na przykład MIT. Dane używane zgodnie z licencją opisaną w sekcji „Dane i licencja”.]
+Projekt na licencji MIT. Zbiór danych na licencji MIT (AIR Lab Makerere University).
